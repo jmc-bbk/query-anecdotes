@@ -1,19 +1,39 @@
+import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { getAnecdotes, voteAnecdote } from './requests'
+
 import AnecdoteForm from './components/AnecdoteForm'
 import Notification from './components/Notification'
+import { useNotificationDispatch } from './NotificationContext'
 
 const App = () => {
+  const notificationDispatch = useNotificationDispatch()
+  const queryClient = useQueryClient()
+
+  const voteAnecdoteMutation = useMutation(voteAnecdote, {
+    onSuccess: (data) => {
+      const { content } = data
+      queryClient.invalidateQueries('getAnecdotes')
+      notificationDispatch({ type: 'SET', notification: `You voted for ${content}!` })
+      setTimeout(() => {
+        notificationDispatch({ type: 'REMOVE' })
+      }, 5000)
+    }
+  })
+
+  const res = useQuery(
+    'getAnecdotes',
+    getAnecdotes
+  )
 
   const handleVote = (anecdote) => {
-    console.log('vote')
+    voteAnecdoteMutation.mutate(anecdote)
   }
 
-  const anecdotes = [
-    {
-      "content": "If it hurts, do it more often",
-      "id": "47145",
-      "votes": 0
-    },
-  ]
+  if (res.isLoading) {
+    return <div>Loading!</div>
+  }
+
+  const anecdotes = res.data
 
   return (
     <div>
