@@ -3,13 +3,20 @@ import { getAnecdotes, voteAnecdote } from './requests'
 
 import AnecdoteForm from './components/AnecdoteForm'
 import Notification from './components/Notification'
+import { useNotificationDispatch } from './NotificationContext'
 
 const App = () => {
+  const notificationDispatch = useNotificationDispatch()
   const queryClient = useQueryClient()
 
   const voteAnecdoteMutation = useMutation(voteAnecdote, {
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const { content } = data
       queryClient.invalidateQueries('getAnecdotes')
+      notificationDispatch({ type: 'SET', notification: `You voted for ${content}!` })
+      setTimeout(() => {
+        notificationDispatch({ type: 'REMOVE' })
+      }, 5000)
     }
   })
 
@@ -27,8 +34,6 @@ const App = () => {
   }
 
   const anecdotes = res.data
-
-  console.log(anecdotes)
 
   return (
     <div>
